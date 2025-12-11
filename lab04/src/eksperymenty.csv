@@ -1,0 +1,21 @@
+id_eksperymentu,nazwa_zbioru,wariant_modelu,liczba_przedzialow,poprawka_laplace,uzycie_log,proporcje_train_test,dokladnosc_train,dokladnosc_test,statystyki_klas_test
+1,seeds_dataset,dyskretny,5,NIE,NIE,80/20,0.9107,0.9524,klasa_1.0:10/12; klasa_2.0:15/15; klasa_3.0:15/15
+2,seeds_dataset,dyskretny,5,NIE,TAK,80/20,0.9107,0.9524,klasa_1.0:10/12; klasa_2.0:15/15; klasa_3.0:15/15
+3,seeds_dataset,dyskretny,5,TAK,NIE,80/20,0.8929,0.9524,klasa_1.0:10/12; klasa_2.0:15/15; klasa_3.0:15/15
+4,seeds_dataset,dyskretny,2,NIE,NIE,80/20,0.875,0.881,klasa_1.0:8/12; klasa_2.0:15/15; klasa_3.0:14/15
+5,seeds_dataset,dyskretny,3,NIE,NIE,80/20,0.8512,0.9048,klasa_1.0:10/12; klasa_2.0:13/15; klasa_3.0:15/15
+6,seeds_dataset,dyskretny,4,NIE,NIE,80/20,0.9048,0.9762,klasa_1.0:11/12; klasa_2.0:15/15; klasa_3.0:15/15
+7,seeds_dataset,dyskretny,5,NIE,NIE,80/20,0.9107,0.9524,klasa_1.0:10/12; klasa_2.0:15/15; klasa_3.0:15/15
+8,seeds_dataset,dyskretny,7,NIE,NIE,80/20,0.9226,0.9286,klasa_1.0:10/12; klasa_2.0:15/15; klasa_3.0:14/15
+9,seeds_dataset,dyskretny,10,NIE,NIE,80/20,0.9583,0.9524,klasa_1.0:10/12; klasa_2.0:15/15; klasa_3.0:15/15
+10,seeds_dataset,dyskretny,15,NIE,NIE,80/20,0.9524,0.9286,klasa_1.0:12/12; klasa_2.0:15/15; klasa_3.0:12/15
+11,seeds_dataset,dyskretny,20,NIE,NIE,80/20,0.9524,0.9048,klasa_1.0:10/12; klasa_2.0:15/15; klasa_3.0:13/15
+12,seeds_dataset,dyskretny,5,NIE,NIE,50/50,0.8857,0.9429,klasa_1.0:29/35; klasa_2.0:32/32; klasa_3.0:38/38
+13,seeds_dataset,dyskretny,5,NIE,NIE,60/40,0.9048,0.9524,klasa_1.0:24/28; klasa_2.0:28/28; klasa_3.0:28/28
+14,seeds_dataset,dyskretny,5,NIE,NIE,70/30,0.9116,0.9206,klasa_1.0:15/19; klasa_2.0:22/22; klasa_3.0:21/22
+15,seeds_dataset,dyskretny,5,NIE,NIE,80/19,0.9107,0.9524,klasa_1.0:10/12; klasa_2.0:15/15; klasa_3.0:15/15
+16,seeds_dataset,dyskretny,5,NIE,NIE,90/9,0.9206,1.0,klasa_1.0:4/4; klasa_2.0:11/11; klasa_3.0:6/6
+17,seeds_dataset,dyskretny (sklearn CategoricalNB),5,TAK (domyślnie w sklearn),TAK (wewnętrznie),80/20,0.881,0.9524,klasa_1:10/12; klasa_2:15/15; klasa_3:15/15
+18,seeds_dataset,ciągły (sklearn GaussianNB),N/A,N/A,TAK (wewnętrznie),80/20,0.8988,0.9762,klasa_1:11/12; klasa_2:15/15; klasa_3:15/15
+19,iris (UCI),dyskretny,5,NIE,NIE,80/20,0.9333,0.8667,klasa_0.0:5/7; klasa_1.0:11/11; klasa_2.0:10/12
+20,iris (UCI),dyskretny,5,TAK,NIE,80/20,0.9333,0.8667,klasa_0.0:5/7; klasa_1.0:11/11; klasa_2.0:10/12
