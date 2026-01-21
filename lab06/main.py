@@ -1,17 +1,22 @@
 # pyright: standard
 import random
 import time
-from typing import Dict, List
+from typing import Dict, List, Set
+from numpy import arange, ceil
+import matplotlib.pyplot as plt
 
 
 class BoardVector:
-    def __init__(self, size=4):
-        self._init_board(size)
+    def __init__(self, size=4, seed=0):
+        self._init_board(size, seed)
 
-    def generate_board(self, size):
-        self._init_board(size)
+    def generate_board(self, size, seed=0):
+        self._init_board(size, seed)
 
-    def _init_board(self, size):
+    def _init_board(self, size, seed):
+        if seed != 0:
+            random.seed(seed)
+
         self._size = size
         self._vector = [random.randint(0, size - 1) for _ in range(size)]
 
@@ -35,14 +40,28 @@ class BoardVector:
                     counter += 1
         return counter
 
-    def cross(self, other):
-        idx = random.randint(1, self._size - 2)
+    def cross(self, other, points: int = 2):
+        cuts = sorted(random.sample(range(1, self._size), points))
 
         child1 = BoardVector(self._size)
         child2 = BoardVector(self._size)
 
-        child1._vector = self._vector[:idx] + other._vector[idx:]
-        child2._vector = other._vector[:idx] + self._vector[idx:]
+        child1._vector = []
+        child2._vector = []
+
+        src1, src2 = self._vector, other._vector
+        last = 0
+        swap = False
+
+        for cut in cuts + [self._size]:
+            if not swap:
+                child1._vector.extend(src1[last:cut])
+                child2._vector.extend(src2[last:cut])
+            else:
+                child1._vector.extend(src2[last:cut])
+                child2._vector.extend(src1[last:cut])
+            swap = not swap
+            last = cut
 
         return child1, child2
 
@@ -71,29 +90,29 @@ class BoardVector:
 
 
 class Populatiuon:
-    def __init__(self, popSize=100, n=6):
-        self._popSize = popSize
+    def __init__(self, popSize=100, n=6, seed=0):
         self._pop: List[Dict] = []
         self._n = n
 
-        for _ in range(self._popSize):
-            bv = BoardVector(n)
+        for _ in range(popSize):
+            bv = BoardVector(n, seed)
             self._pop.append({"board": bv, "eval": bv.conflicts()})
 
     def evaluate(self, pop):
         for i, indv in enumerate(pop):
             indv["eval"] = indv["board"].conflicts()
 
-    def crossover(self, P: List[Dict], pc: float):
+    def crossover(self, P: List[Dict], pc: float, points: int):
         Pn = []
         for i in range(0, len(P), 2):
-            if random.random() < pc:
-                child1, child2 = P[i]["board"].cross(P[i + 1]["board"])
+            if random.random() < pc and i != len(P) - 1:
+                child1, child2 = P[i]["board"].cross(P[i + 1]["board"], points)
                 Pn.append({"board": child1, "eval": 0})
                 Pn.append({"board": child2, "eval": 0})
             else:
                 Pn.append(P[i])
-                Pn.append(P[i + 1])
+                if i != len(P) - 1:
+                    Pn.append(P[i + 1])
         return Pn
 
     def mutation(self, P: List[Dict], pn: float):
@@ -123,23 +142,33 @@ class Populatiuon:
         idx, _ = self.worstCandidate(self._pop)
         self._pop[idx] = best
 
-    def evolve(self, pn=0.2, pc=0.8, genMax=10000, indivPerRound=3):
+    def evolve(self, pn=0.2, pc=0.8, genMax=10000, indivPerRound=3, points: int = 2):
         gen = 0
         _, best = self.bestCandidate(self._pop)
+        meanFit = []
+        bestFit = []
+
         while gen < genMax and best["eval"] > 0:
+            meanFit.append(sum(indv["eval"] for indv in self._pop) / len(self._pop))
+            bestFit.append(best["eval"])
             Pn = self.selection(self._pop, indivPerRound)
-            Pn = self.crossover(Pn, pc)
+            Pn = self.crossover(Pn, pc, points)
             Pn = self.mutation(Pn, pn)
             self.evaluate(Pn)
 
             _, cand = self.bestCandidate(Pn)
             if cand["eval"] < best["eval"]:
                 best = cand
+
             self.replacement(Pn, best)
             self.evaluate(self._pop)
+
             gen += 1
 
-        return best, gen
+        meanFit.append(sum(indv["eval"] for indv in self._pop) / len(self._pop))
+        bestFit.append(best["eval"])
+
+        return best, gen, meanFit, bestFit
 
     def printPopulation(self):
         for indv in self._pop:
@@ -147,13 +176,39 @@ class Populatiuon:
             indv["board"].printBoard()
 
 
-pop = Populatiuon(20, 10)
+def baseExperiment(seed=0):
+    nHetman = [5, 10, 50, 100]
+    with open("./csv/baseline_n.csv", "w") as f:
+        f.write("generation, run, parameter, mean_fitness, best_fitness\n")
+        for n in nHetman:
+            pop = Populatiuon(10, n=n, seed=seed)
+            best, gen, meanFit, bestFit = pop.evolve(
+                points=int(ceil(n * 0.3)), genMax=1000
+            )
+            print(f"Best eval: {best['eval']}, Generation: {gen}")
 
-pop.printPopulation()
-best, gen = pop.evolve(indivPerRound=3)
-print()
-print(gen)
-pop.printPopulation()
+            x = arange(gen + 1)
 
-print(f"{best['eval']}: ", end="")
-print(best["board"].conflicts())
+            fig, axs = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
+
+            axs[0].plot(x, bestFit, label="Best fitness")
+            axs[0].set_ylabel("Best fitness")
+            axs[0].set_title(f"N-Queens (N={n})")
+            axs[0].grid(True)
+            axs[0].legend()
+
+            axs[1].plot(x, meanFit, label="Mean fitness")
+            axs[1].set_xlabel("Generation")
+            axs[1].set_ylabel("Mean fitness")
+            axs[1].grid(True)
+            axs[1].legend()
+
+            plt.tight_layout()
+            plt.savefig(f"./fig/baseline_{n}.jpg", dpi=150)
+            plt.close()
+
+            for xi in x:
+                f.write(f"{xi}, {seed}, {n}, {meanFit[int(xi)]}, {bestFit[int(xi)]}\n")
+
+
+baseExperiment(1)
