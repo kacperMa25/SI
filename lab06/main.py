@@ -1,9 +1,11 @@
 # pyright: standard
+from operator import ge
 import random
 import time
 from typing import Dict, List, Set
 from numpy import arange, ceil
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 
 class BoardVector:
@@ -176,39 +178,159 @@ class Populatiuon:
             indv["board"].printBoard()
 
 
-def baseExperiment(seed=0):
+def baseExperiment(howManyTimes: int):
     nHetman = [5, 10, 50, 100]
-    with open("./csv/baseline_n.csv", "w") as f:
-        f.write("generation, run, parameter, mean_fitness, best_fitness\n")
+    path = "./csv/baseline_n.csv"
+    exists = Path(path).is_file()
+    with open(path, "a") as f:
+        if not exists:
+            f.write("generation,run,parameter,mean_fitness,best_fitness\n")
         for n in nHetman:
-            pop = Populatiuon(10, n=n, seed=seed)
-            best, gen, meanFit, bestFit = pop.evolve(
-                points=int(ceil(n * 0.3)), genMax=1000
-            )
-            print(f"Best eval: {best['eval']}, Generation: {gen}")
+            seed = random.randint(1, 10000)
+            for _ in range(howManyTimes):
+                pop = Populatiuon(10, n=n, seed=seed)
+                best, gen, meanFit, bestFit = pop.evolve(
+                    points=int(ceil(n * 0.3)), genMax=1000
+                )
+                print(f"Best eval: {best['eval']}, Generation: {gen}, n: {n}")
 
-            x = arange(gen + 1)
+                x = arange(gen + 1)
 
-            fig, axs = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
-
-            axs[0].plot(x, bestFit, label="Best fitness")
-            axs[0].set_ylabel("Best fitness")
-            axs[0].set_title(f"N-Queens (N={n})")
-            axs[0].grid(True)
-            axs[0].legend()
-
-            axs[1].plot(x, meanFit, label="Mean fitness")
-            axs[1].set_xlabel("Generation")
-            axs[1].set_ylabel("Mean fitness")
-            axs[1].grid(True)
-            axs[1].legend()
-
-            plt.tight_layout()
-            plt.savefig(f"./fig/baseline_{n}.jpg", dpi=150)
-            plt.close()
-
-            for xi in x:
-                f.write(f"{xi}, {seed}, {n}, {meanFit[int(xi)]}, {bestFit[int(xi)]}\n")
+                for xi in x:
+                    f.write(
+                        f"{xi}, {seed}, {n}, {meanFit[int(xi)]}, {bestFit[int(xi)]}\n"
+                    )
 
 
+def popSizeExperiment(howManyTimes=5):
+    popSizes = [10, 50, 100, 1000]
+    path = "./csv/population.csv"
+    exists = Path(path).is_file()
+    with open(path, "a") as f:
+        if not exists:
+            f.write("generation,run,parameter,mean_fitness,best_fitness\n")
+        for _ in range(howManyTimes):
+            seed = random.randint(0, 10000)
+            for size in popSizes:
+                pop = Populatiuon(size, n=10, seed=seed)
+                best, gen, meanFit, bestFit = pop.evolve(points=3, genMax=1000)
+                print(f"Best eval: {best['eval']}, Generation: {gen}, popSize: {size}")
+
+                x = arange(gen + 1)
+
+                for xi in x:
+                    f.write(
+                        f"{xi}, {seed}, {size}, {meanFit[int(xi)]}, {bestFit[int(xi)]}\n"
+                    )
+
+
+def maxGenExperiment(howManyTimes=5):
+    maxGenSizes = [10, 50, 100, 1000, 10000]
+    path = "./csv/generations.csv"
+    exists = Path(path).is_file()
+    with open(path, "a") as f:
+        if not exists:
+            f.write("generation,run,parameter,mean_fitness,best_fitness\n")
+        for _ in range(howManyTimes):
+            seed = random.randint(0, 10000)
+            for size in maxGenSizes:
+                pop = Populatiuon(100, n=10, seed=seed)
+                best, gen, meanFit, bestFit = pop.evolve(points=3, genMax=size)
+                print(f"Best eval: {best['eval']}, Generation: {gen}, genMax: {size}")
+
+                x = arange(gen + 1)
+
+                for xi in x:
+                    f.write(
+                        f"{xi}, {seed}, {size}, {meanFit[int(xi)]}, {bestFit[int(xi)]}\n"
+                    )
+
+
+def pnExperiment(howManyTimes=5):
+    pns = [0.01, 0.1, 0.2, 0.3, 0.5]
+    path = "./csv/mutation.csv"
+    exists = Path(path).is_file()
+    with open(path, "a") as f:
+        if not exists:
+            f.write("generation,run,parameter,mean_fitness,best_fitness\n")
+        for _ in range(howManyTimes):
+            seed = random.randint(0, 10000)
+            for chance in pns:
+                pop = Populatiuon(100, n=10, seed=seed)
+                best, gen, meanFit, bestFit = pop.evolve(
+                    points=3, genMax=1000, pn=chance
+                )
+                print(
+                    f"Best eval: {best['eval']}, Generation: {gen}, mutation chance: {chance}"
+                )
+
+                x = arange(gen + 1)
+
+                for xi in x:
+                    f.write(
+                        f"{xi}, {seed}, {chance}, {meanFit[int(xi)]}, {bestFit[int(xi)]}\n"
+                    )
+
+
+def pcExperiment(howManyTimes=5):
+    pcs = [0.3, 0.5, 0.7, 0.8, 0.9]
+    path = "./csv/crossover.csv"
+    exists = Path(path).is_file()
+    with open(path, "a") as f:
+        if not exists:
+            f.write("generation,run,parameter,mean_fitness,best_fitness\n")
+        for _ in range(howManyTimes):
+            seed = random.randint(0, 10000)
+            for chance in pcs:
+                pop = Populatiuon(100, n=10, seed=seed)
+                best, gen, meanFit, bestFit = pop.evolve(
+                    points=3, genMax=1000, pc=chance
+                )
+                print(
+                    f"Best eval: {best['eval']}, Generation: {gen}, crossover chance: {chance}"
+                )
+
+                for xi in range(gen + 1):
+                    f.write(
+                        f"{xi}, {seed}, {chance}, {meanFit[int(xi)]}, {bestFit[int(xi)]}\n"
+                    )
+
+
+def indivPerRoundExperiment(howManyTimes=5):
+    tournament = [2, 3, 4, 5, 10]
+    path = "./csv/tournament.csv"
+    exists = Path(path).is_file()
+    with open(path, "a") as f:
+        if not exists:
+            f.write("generation,run,parameter,mean_fitness,best_fitness\n")
+        for _ in range(howManyTimes):
+            seed = random.randint(0, 10000)
+            for size in tournament:
+                pop = Populatiuon(100, n=10, seed=seed)
+                best, gen, meanFit, bestFit = pop.evolve(
+                    points=3, genMax=1000, indivPerRound=size
+                )
+                print(
+                    f"Best eval: {best['eval']}, Generation: {gen}, tournament size: {size}"
+                )
+
+                x = arange(gen + 1)
+
+                for xi in x:
+                    f.write(
+                        f"{xi}, {seed}, {size}, {meanFit[int(xi)]}, {bestFit[int(xi)]}\n"
+                    )
+
+
+n = 5
 baseExperiment(1)
+print()
+popSizeExperiment(n)
+print()
+pcExperiment(n)
+print()
+pnExperiment(n)
+print()
+maxGenExperiment(n)
+print()
+indivPerRoundExperiment(n)
