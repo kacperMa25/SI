@@ -26,7 +26,7 @@ for filename in filenames:
     ax.set_xlabel("Generation")
     ax.set_ylabel("Mean fitness (avg over run)")
     ax.legend()
-    fig.savefig("./fig/" + filename + "_mean.jpg")
+    fig.savefig("./fig/" + filename + "_mean.svg")
     plt.close(fig)
 
     # Best fitness
@@ -37,5 +37,5 @@ for filename in filenames:
     ax.set_xlabel("Generation")
     ax.set_ylabel("Best fitness (avg over run)")
     ax.legend()
-    fig.savefig("./fig/" + filename + "_best.jpg")
+    fig.savefig("./fig/" + filename + "_best.svg")
     plt.close(fig)
