@@ -1,8 +1,7 @@
 # pyright: standard
 import random
 import time
-import numpy as np
-from numpy.testing import print_assert_equal
+from typing import Dict, List
 
 
 class BoardVector:
@@ -19,6 +18,11 @@ class BoardVector:
     def make_board(self, vector: list[int]):
         self._size = len(vector)
         self._vector = list(vector)
+
+    def printBoard(self):
+        for i in self._vector:
+            print(i, end=" ")
+        print()
 
     def conflicts(self):
         counter = 0
@@ -44,12 +48,13 @@ class BoardVector:
 
     def mutate(self, pn):
         bv = BoardVector()
-        return bv.make_board(
+        bv.make_board(
             [
                 random.randint(0, self._size - 1) if random.random() < pn else gen
                 for gen in self._vector
             ]
         )
+        return bv
 
     def measure_time(self, iterations):
         cum_time = 0
@@ -66,30 +71,89 @@ class BoardVector:
 
 
 class Populatiuon:
-    def __init__(self, pop=100, n=6):
-        self._popSize = pop
-        self._pop = []
-        self._prevPop = []
+    def __init__(self, popSize=100, n=6):
+        self._popSize = popSize
+        self._pop: List[Dict] = []
         self._n = n
 
         for _ in range(self._popSize):
             bv = BoardVector(n)
-            self._pop = [{"board": bv, "eval": 0}]
+            self._pop.append({"board": bv, "eval": bv.conflicts()})
 
     def evaluate(self, pop):
-        for indv in pop:
+        for i, indv in enumerate(pop):
             indv["eval"] = indv["board"].conflicts()
 
-    def crossover(self, pc):
-        for i in range(0, self._popSize, 2):
+    def crossover(self, P: List[Dict], pc: float):
+        Pn = []
+        for i in range(0, len(P), 2):
             if random.random() < pc:
-                child1, child2 = self._pop[i]["board"].cross(self._pop[i + 1]["board"])
-                self._pop[i] = {"board": child1, "eval": 0}
-                self._pop[i + 1] = {"board": child2, "eval": 0}
+                child1, child2 = P[i]["board"].cross(P[i + 1]["board"])
+                Pn.append({"board": child1, "eval": 0})
+                Pn.append({"board": child2, "eval": 0})
+            else:
+                Pn.append(P[i])
+                Pn.append(P[i + 1])
+        return Pn
 
-    def mutation(self, pn):
-        for i in range(self._popSize):
-            self._pop[i] = self._pop[i]["board"].mutate(pn)
+    def mutation(self, P: List[Dict], pn: float):
+        Pn = []
+        for i in range(len(P)):
+            Pn.append({"board": P[i]["board"].mutate(pn), "eval": 0})
+        return Pn
 
-    def selection(self):
-        pass
+    def selection(self, P: List[Dict], indivPerRound: int = 3):
+        Pn = []
+        for i in range(len(P)):
+            tournamentRound = [
+                P[random.randint(0, len(P) - 1)] for _ in range(indivPerRound)
+            ]
+            _, best = self.bestCandidate(tournamentRound)
+            Pn.append(best)
+        return Pn
+
+    def bestCandidate(self, P: List[Dict]) -> tuple[int, Dict]:
+        return min(enumerate(P), key=lambda indiv: indiv[1]["eval"])
+
+    def worstCandidate(self, P: List[Dict]) -> tuple[int, Dict]:
+        return max(enumerate(P), key=lambda indiv: indiv[1]["eval"])
+
+    def replacement(self, P: List[Dict], best: Dict):
+        self._pop = P
+        idx, _ = self.worstCandidate(self._pop)
+        self._pop[idx] = best
+
+    def evolve(self, pn=0.2, pc=0.8, genMax=10000, indivPerRound=3):
+        gen = 0
+        _, best = self.bestCandidate(self._pop)
+        while gen < genMax and best["eval"] > 0:
+            Pn = self.selection(self._pop, indivPerRound)
+            Pn = self.crossover(Pn, pc)
+            Pn = self.mutation(Pn, pn)
+            self.evaluate(Pn)
+
+            _, cand = self.bestCandidate(Pn)
+            if cand["eval"] < best["eval"]:
+                best = cand
+            self.replacement(Pn, best)
+            self.evaluate(self._pop)
+            gen += 1
+
+        return best, gen
+
+    def printPopulation(self):
+        for indv in self._pop:
+            print(f"{indv['eval']}: ", end="")
+            indv["board"].printBoard()
+
+
+pop = Populatiuon(20, 10)
+
+pop.printPopulation()
+best, gen = pop.evolve(indivPerRound=3)
+print()
+print(gen)
+pop.printPopulation()
+
+print(f"{best['eval']}: ", end="")
+print(best["board"].conflicts())
